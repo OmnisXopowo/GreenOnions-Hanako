@@ -126,7 +126,7 @@ namespace GreenOnions.PictureSearcher
                 if (BotInfo.Config.SearchEnabledTraceMoe || BotInfo.Config.SearchEnabledSauceNAO || BotInfo.Config.SearchEnabledASCII2D || BotInfo.Config.SearchEnabledIqdb || BotInfo.Config.SearchEnabled3dIqdb)  //至少启用了一种搜图引擎
                     SendMessage(BotInfo.Config.SearchingReply);  //正在搜索中提示
 
-            string qqImgUrl = ImageHelper.ReplaceGroupUrl(inImgMsg.Url).Replace("//","/").Replace("http:/", "http://").Replace("https:/", "https://");
+            string qqImgUrl = ImageHelper.ReplaceGroupUrl(inImgMsg.Url).Replace("//", "/").Replace("http:/", "http://").Replace("https:/", "https://");
             LogHelper.WriteInfoLog($"需要搜图的地址为:{qqImgUrl}");
             try
             {
@@ -235,6 +235,7 @@ namespace GreenOnions.PictureSearcher
                 {
                     Task.Factory.ContinueWhenAll(searchTasks.ToArray(), callback =>
                     {
+                        RemoveNull(outMessages);
                         GreenOnionsForwardMessage[] forwardMessages = outMessages.Select(msg => new GreenOnionsForwardMessage(BotInfo.Config.QQId, BotInfo.Config.BotName, msg)).ToArray();
                         GreenOnionsMessages outForwardMsg = forwardMessages;
                         outForwardMsg.RevokeTime = outMessages.First().RevokeTime;
@@ -391,7 +392,7 @@ namespace GreenOnions.PictureSearcher
 
                         StringBuilder stringBuilder = new StringBuilder();
                         stringBuilder.AppendLine("地址：" + firstItem.Url);
-                        stringBuilder.AppendLine($"相似度：{firstItem.Similarity}%({ firstItem.Source.ToString().Replace("_", "") })");
+                        stringBuilder.AppendLine($"相似度：{firstItem.Similarity}%({firstItem.Source.ToString().Replace("_", "")})");
                         stringBuilder.AppendLine("年龄分级：" + firstItem.Rating);
                         if (BotInfo.Config.SearchIqdbSendTags)  //发送标签(英文)
                         {
@@ -1059,6 +1060,27 @@ namespace GreenOnions.PictureSearcher
             await AddImageMessageAfterCheckPornAsync(BotInfo.Config.CheckPornEnabled && BotInfo.Config.OriginalPictureCheckPornEnabled, url, BotInfo.Config.OriginalPictureUseProxy, outMessage);
 
             return outMessage;
+        }
+
+        static void RemoveNull<T>(List<T> list)
+        {
+            // 找出第一个空元素 O(n)
+            int count = list.Count;
+            for (int i = 0; i < count; i++)
+                if (list[i] == null)
+                {
+                    // 记录当前位置
+                    int newCount = i++;
+
+                    // 对每个非空元素，复制至当前位置 O(n)
+                    for (; i < count; i++)
+                        if (list[i] != null)
+                            list[newCount++] = list[i];
+
+                    // 移除多余的元素 O(n)
+                    list.RemoveRange(newCount, count - newCount);
+                    break;
+                }
         }
     }
 }
